@@ -1304,11 +1304,17 @@ void ESPAsync_WiFiManager::handleWifiSave(AsyncWebServerRequest *request)
 #endif
 
   String page = "";
-  page +=  "Credentials Saved";
+  page +=  "Credentials Saved: ";
   page += _apName;
+  page += " ";
   page += _ssid;
+  page += " ";
+  page += _pass;
+  page += " ";
   page += _ssid1;
-  
+  page += " ";
+  page += _pass1;
+
 #if ( USING_ESP32_S2 || USING_ESP32_C3 )
   request->send(200, "text/plain", page);
   
