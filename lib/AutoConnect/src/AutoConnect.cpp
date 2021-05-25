@@ -19,7 +19,6 @@
 
 ESPAsync_WiFiManager::ESPAsync_WiFiManager(AsyncWebServer * webserver, DNSServer *dnsserver, const char *iHostname)
 {
-
   server    = webserver;
   dnsServer = dnsserver;
   
@@ -136,7 +135,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   // Check (https://github.com/khoih-prog/ESP_WiFiManager/issues/58)
   if (_WiFi_AP_IPconfig._ap_static_ip)
   {
-    log_w("Custom AP IP/GW/Subnet = ", _WiFi_AP_IPconfig._ap_static_ip, _WiFi_AP_IPconfig._ap_static_gw, _WiFi_AP_IPconfig._ap_static_sn);
+    log_w("Custom AP IP/GW/Subnet = %s, %s, %s", _WiFi_AP_IPconfig._ap_static_ip.toString().c_str(), _WiFi_AP_IPconfig._ap_static_gw.toString().c_str(), _WiFi_AP_IPconfig._ap_static_sn.toString().c_str());
     
     WiFi.softAPConfig(_WiFi_AP_IPconfig._ap_static_ip, _WiFi_AP_IPconfig._ap_static_gw, _WiFi_AP_IPconfig._ap_static_sn);
   }
@@ -156,7 +155,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   
   _configPortalStart = millis();
 
-  log_w("\nConfiguring AP SSID =", _apName);
+  log_i("\nConfiguring AP SSID = %s", _apName);
 
   if (_apPassword != NULL)
   {
@@ -167,7 +166,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
 
       _apPassword = NULL;
     }
-    log_w("AP PWD =", _apPassword);
+    log_w("AP PWD = %s", _apPassword);
   }
   
   
@@ -181,7 +180,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   
   if (_apPassword != NULL)
   {
-    log_w("AP Channel =", channel);
+    log_w("AP Channel = %i", channel);
     
     //WiFi.softAP(_apName, _apPassword);//password option
     WiFi.softAP(_apName, _apPassword, channel);
@@ -195,7 +194,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   
   delay(500); // Without delay I've seen the IP address blank
   
-  log_i("AP IP address =", WiFi.softAPIP());
+  log_i("AP IP address = %s", WiFi.softAPIP().toString().c_str());
 
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
   
@@ -210,6 +209,8 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
   server->on("/fwlink",   std::bind(&ESPAsync_WiFiManager::handleRoot,        this, std::placeholders::_1)).setFilter(ON_AP_FILTER);  
   server->onNotFound (std::bind(&ESPAsync_WiFiManager::handleNotFound,        this, std::placeholders::_1));
+
+  server->begin(); // Web server start
   
   log_i("HTTP server started");
 }
@@ -295,11 +296,11 @@ String ESPAsync_WiFiManager::networkListAsString()
 
       if (wifiSSIDs[i].encryptionType != WIFI_AUTH_OPEN)
       {
-        item += "0";
+        item += "1";
       } 
       else 
       {
-        item += "1";
+        item += "0";
       }
 
       item += ";";
@@ -415,7 +416,7 @@ void ESPAsync_WiFiManager::scan()
           {
             if (cssid == wifiSSIDs[j].SSID) 
             {
-              log_d("DUP AP: %s", wifiSSIDs[j].SSID);
+              log_d("DUP AP: %s", wifiSSIDs[j].SSID.c_str());
               // set dup aps to NULL
               wifiSSIDs[j].duplicate = true; 
             }
@@ -604,12 +605,12 @@ bool  ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *ap
     //
     if ( scannow == -1 || millis() > scannow + TIME_BETWEEN_MODAL_SCANS)
     {
-      log_d("startConfigPortal: About to modal scan");
+      log_d("About to modal scan");
       
       // since we are modal, we can scan every time
       shouldscan = true;
       
-      WiFi.disconnect (false);
+      WiFi.disconnect(false);
 
       scan();
       
@@ -1128,11 +1129,13 @@ void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *request)
     {
       page += " on ";
       page += WiFi_SSID();
+      page += " ";
     }
     else
     {
       page += " on ";
       page += WiFi_SSID();
+      page += " ";
     }
   }
 
@@ -1460,7 +1463,8 @@ void ESPAsync_WiFiManager::handleInfo(AsyncWebServerRequest *request)
   
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
-  
+
+  request->send(response);
 #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 
   log_d("Info page sent");
@@ -1706,7 +1710,7 @@ bool ESPAsync_WiFiManager::captivePortal(AsyncWebServerRequest *request)
   if (!isIp(request->host()))
   {
     log_d("Request redirected to captive portal");
-    log_d("Location http://%s", toStringIp(request->client()->localIP()));
+    log_d("Location http://%s", request->client()->localIP().toString().c_str());
     
     AsyncWebServerResponse *response = request->beginResponse(302, "text/plain", "");
     response->addHeader("Location", String("http://") + toStringIp(request->client()->localIP()));
@@ -1715,7 +1719,7 @@ bool ESPAsync_WiFiManager::captivePortal(AsyncWebServerRequest *request)
     return true;
   }
   
-  log_d("request host IP =%s", request->host());
+  log_d("request host IP = %s", request->host().c_str());
   
   return false;
 }
