@@ -5,6 +5,14 @@
 #define ESP_getChipId()   ((uint32_t)ESP.getEfuseMac())
 typedef int16_t wifi_ssid_count_t;  
 
+/** Handle CORS in pages */
+// Default false for using only whenever necessary to avoid security issue when using CORS (Cross-Origin Resource Sharing)
+#ifndef USING_CORS_FEATURE
+  // Contributed by AlesSt (https://github.com/AlesSt) to solve AJAX CORS protection problem of API redirects on client side
+  // See more in https://github.com/khoih-prog/ESP_WiFiManager/issues/27 and https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+  #define USING_CORS_FEATURE     false
+#endif
+
 typedef struct
 {
   IPAddress _sta_static_ip;
