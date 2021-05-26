@@ -118,17 +118,10 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   if (WiFi.getAutoConnect() == 0)
     WiFi.setAutoConnect(1);
 
-#if !( USING_ESP32_S2 || USING_ESP32_C3 )
-  #ifdef ESP8266
-    // KH, mod for Async
     server->reset();
-  #else		//ESP32
-    server->reset();
-  #endif
 
   if (!dnsServer)
     dnsServer = new DNSServer;
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 
   // optional soft ip config
   // Must be put here before dns server start to take care of the non-default ConfigPortal AP IP.
@@ -591,11 +584,6 @@ bool  ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *ap
 
   while (_configPortalTimeout == 0 || millis() < _configPortalStart + _configPortalTimeout)
   {
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )   
-    // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-    delay(1);
-#else
-    //DNS
     if (dnsServer)
       dnsServer->processNextRequest();    
     
@@ -619,7 +607,6 @@ bool  ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *ap
         
       scannow = millis() ;
     }
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 
     if (connect)
     {
@@ -689,10 +676,8 @@ bool  ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *ap
     log_e("Timed out connection result: %s", getStatus(connRes));
   }
 
-#if !( USING_ESP32_S2 || USING_ESP32_C3 )
   server->reset();
   dnsServer->stop();
-#endif
 
   return  WiFi.status() == WL_CONNECTED;
 }
@@ -1218,13 +1203,6 @@ void ESPAsync_WiFiManager::handleWifi(AsyncWebServerRequest *request)
     //***** End added for DNS address options *****
   #endif
   }
-  
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "text/plain", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else  
  
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", page);
   
@@ -1239,8 +1217,6 @@ void ESPAsync_WiFiManager::handleWifi(AsyncWebServerRequest *request)
   response->addHeader("Expires", "-1");
   request->send(response);
   
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-
   log_d("Sent config page");
 }
 
@@ -1315,13 +1291,6 @@ void ESPAsync_WiFiManager::handleWifiSave(AsyncWebServerRequest *request)
   page += " ";
   page += _pass1;
 
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "text/plain", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else    
- 
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1333,8 +1302,6 @@ void ESPAsync_WiFiManager::handleWifiSave(AsyncWebServerRequest *request)
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
   request->send(response);
-  
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 
   log_d("Sent wifi save page");
 
@@ -1360,13 +1327,6 @@ void ESPAsync_WiFiManager::handleServerClose(AsyncWebServerRequest *request)
   page += "Portal closed...";
   
   //page += F("Push button on device to restart configuration server!");
-  
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "text/plain", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else    
  
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -1379,8 +1339,6 @@ void ESPAsync_WiFiManager::handleServerClose(AsyncWebServerRequest *request)
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
   request->send(response);
-  
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
   
   stopConfigPortal = true; //signal ready to shutdown config portal
   
@@ -1452,13 +1410,6 @@ void ESPAsync_WiFiManager::handleInfo(AsyncWebServerRequest *request)
   page += F("<p/>More information about ESPAsync_WiFiManager at");
   page += F("<p/><a href=\"https://github.com/khoih-prog/ESPAsync_WiFiManager\">https://github.com/khoih-prog/ESPAsync_WiFiManager</a>");
  
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "text/plain", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else    
- 
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1469,9 +1420,7 @@ void ESPAsync_WiFiManager::handleInfo(AsyncWebServerRequest *request)
   
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
-
   request->send(response);
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 
   log_d("Info page sent");
 }
@@ -1506,13 +1455,6 @@ void ESPAsync_WiFiManager::handleState(AsyncWebServerRequest *request)
   page += WiFi_SSID();
   page += F("\"}");
    
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "application/json", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else  
-   
   AsyncWebServerResponse *response = request->beginResponse(200, "application/json", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1523,10 +1465,8 @@ void ESPAsync_WiFiManager::handleState(AsyncWebServerRequest *request)
   
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
-  
   request->send(response);
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-  
+
   log_d("Sent state page in json format");
 }
 
@@ -1588,13 +1528,6 @@ void ESPAsync_WiFiManager::handleScan(AsyncWebServerRequest *request)
   
   page += F("]}");
  
-#if ( USING_ESP32_S2 || USING_ESP32_C3 ) 
-  request->send(200, "application/json", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else  
-   
   AsyncWebServerResponse *response = request->beginResponse(200, "application/json", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1605,10 +1538,8 @@ void ESPAsync_WiFiManager::handleScan(AsyncWebServerRequest *request)
   
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
-  
   request->send(response);
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )  
-   
+
   log_d("Sent WiFiScan Data in Json format");
 }
 
@@ -1623,13 +1554,6 @@ void ESPAsync_WiFiManager::handleReset(AsyncWebServerRequest *request)
   page += "WiFi Information";
   page += "Resetting";
   
-#if ( USING_ESP32_S2 || USING_ESP32_C3 ) 
-  request->send(200, "text/plain", page);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else    
- 
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", page);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1642,8 +1566,6 @@ void ESPAsync_WiFiManager::handleReset(AsyncWebServerRequest *request)
   response->addHeader("Expires", "-1");
   request->send(response);
   
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-
   log_d("Sent reset page");
   delay(5000);
   
@@ -1682,13 +1604,6 @@ void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *request)
     message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
   }
 
-#if ( USING_ESP32_S2 || USING_ESP32_C3 )
-  request->send(200, "text/plain", message);
-  
-  // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-  delay(1);
-#else    
- 
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", message);
   response->addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   
@@ -1700,8 +1615,6 @@ void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *request)
   response->addHeader("Pragma", "no-cache");
   response->addHeader("Expires", "-1");
   request->send(response);
-
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
 }
 
 //////////////////////////////////////////
