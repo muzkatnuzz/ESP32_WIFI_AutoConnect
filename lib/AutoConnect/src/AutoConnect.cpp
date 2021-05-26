@@ -203,7 +203,7 @@ void ESPAsync_WiFiManager::setupConfigPortal()
   server->on("/fwlink",   std::bind(&ESPAsync_WiFiManager::handleRoot,        this, std::placeholders::_1)).setFilter(ON_AP_FILTER);  
   server->onNotFound (std::bind(&ESPAsync_WiFiManager::handleNotFound,        this, std::placeholders::_1));
 
-  server->begin(); // Web server start
+  server->begin(); // Web server start in case of AP mode
   
   log_i("HTTP server started");
 }
@@ -257,6 +257,7 @@ bool ESPAsync_WiFiManager::autoConnect(char const *apName, char const *apPasswor
     }
   }
 
+  // no connection to wifi possible - start AP for configuration
   return startConfigPortal(apName, apPassword);
 }
 

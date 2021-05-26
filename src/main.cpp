@@ -4,7 +4,7 @@
 AsyncWebServer webServer(80);
 DNSServer dnsServer;
 
-ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Async_AutoConnect");
+ESPAsync_WiFiManager ESPAsync_wifiManager(&webServer, &dnsServer, "Babbaphone");
 
 // ==== Test if server is reachable =============================================
 void handleTest(AsyncWebServerRequest *request)
@@ -29,10 +29,10 @@ void setup()
   while (!Serial)
     ;
   delay(200);
-  Serial.print("\nStarting Async_AutoConnect_ESP32_minimal on " + String(ARDUINO_BOARD));
+  Serial.print("\nStarting AutoConnectAPI on " + String(ARDUINO_BOARD));
 
-  ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 132, 1), IPAddress(192, 168, 132, 1), IPAddress(255, 255, 255, 0));
-  ESPAsync_wifiManager.autoConnect("Babbaphone", "MamaMama");
+  ESPAsync_wifiManager.setAPStaticIPConfig(IPAddress(192, 168, 251, 89), IPAddress(192, 168, 251, 89), IPAddress(255, 255, 255, 0));
+  ESPAsync_wifiManager.autoConnect("Babbaphone", "babbaphone");
   if (WiFi.status() == WL_CONNECTED)
   {
     Serial.print("Connected. Local IP: ");
@@ -46,7 +46,7 @@ void setup()
   webServer.on("/test", HTTP_GET, handleTest);
   webServer.on("/reset", HTTP_GET, handleReset);
   
-  webServer.begin(); // Web server start
+  webServer.begin(); // Web server start in case of STA wifi connection
 }
 
 void loop()
