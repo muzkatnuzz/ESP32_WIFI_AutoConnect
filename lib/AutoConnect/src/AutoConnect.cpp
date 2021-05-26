@@ -1228,13 +1228,18 @@ void ESPAsync_WiFiManager::handleWifiSave(AsyncWebServerRequest *request)
 {
   log_d("WiFi save");
 
-  //SAVE/connect here
-  _ssid = request->arg("s").c_str();
-  _pass = request->arg("p").c_str();
+  //SAVE/connect here. Move credentials to header to avoid url logging of sensitive data
+  if(!request->hasHeader("ssid")){
+    log_e("No SSID provided to connect to.");
+    return;
+  }
   
+  _ssid = request->header("SSID").c_str();  
+  _pass = request->header("Pwd").c_str();
+
   // New from v1.1.0
-  _ssid1 = request->arg("s1").c_str();
-  _pass1 = request->arg("p1").c_str();
+  _ssid1 = request->header("SSID1").c_str();
+  _pass1 = request->header("Pwd1").c_str();
 
   if (request->hasArg("ip"))
   {
